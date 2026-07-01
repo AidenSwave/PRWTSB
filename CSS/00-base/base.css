@@ -1,0 +1,67 @@
+@font-face {
+  font-family: "Monofonto";
+  src: url("https://raw.githubusercontent.com/AidenSwave/MP3DOC/main/Assets/Fonts/monofonto.otf") format("opentype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+}
+
+:root {
+  --ui-font: "Monofonto", "Lucida Console", "Courier New", monospace;
+  --ui-text-size: clamp(1.3rem, 0.75vw + 1.05rem, 1.75rem);
+  --ui-option-size: clamp(1.35rem, 0.75vw + 1.08rem, 1.8rem);
+  --ui-row-height: clamp(50px, 4.2vw, 67px);
+  --ui-line-height: 1.35;
+  --ui-letter-spacing: 0.02em;
+  --ui-text: #e2cd96;
+  --ui-accent: #f1d99a;
+  --ui-panel: rgba(0, 12, 0, 0.76);
+  --ui-panel-shadow: 0 0 16px 8px rgba(0, 12, 0, 0.62),
+    0 0 42px 20px rgba(0, 12, 0, 0.38),
+    inset 0 0 12px rgba(0, 12, 0, 0.27);
+  --ui-center-line: 75%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+#ui-bar {
+  display: none;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.new-format-error-list {
+  margin: 0 0 24px;
+  padding: 14px 18px 14px 38px;
+  color: #f4b3b3;
+  background: #210d0d;
+  border: 1px solid #9f4545;
+}
+
+.new-format-error-list li + li {
+  margin-top: 10px;
+}
+
+.new-format-error-suggestion {
+  margin-top: 3px;
+  color: #f4dda6;
+}
+
+.new-format-error-list {
+  color: var(--ui-text);
+  font: 400 var(--ui-text-size)/var(--ui-line-height) var(--ui-font);
+  letter-spacing: var(--ui-letter-spacing);
+}

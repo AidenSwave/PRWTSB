@@ -1,0 +1,16 @@
+@media (orientation: portrait) and (max-width: 900px) and (hover: none) and (pointer: coarse) {
+  body::before {
+          content: "Rotate your phone to landscape";
+          position: fixed;
+          z-index: 10000;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          background: #050607;
+          color: #e7cd8b;
+          font: 700 1rem/1.4 "Monofonto", "Lucida Console", "Courier New", monospace;
+          text-align: center;
+        }
+}

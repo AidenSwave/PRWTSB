@@ -1,0 +1,96 @@
+.new-format-stage.nf-hotspots-active > .new-format-content {
+  pointer-events: none;
+}
+
+.new-format-stage.nf-hotspots-blocked > .new-format-content {
+  pointer-events: auto;
+}
+
+.nf-hotspot-layer {
+  position: absolute;
+  z-index: 10;
+  inset: 0;
+  pointer-events: none;
+}
+
+.nf-hotspot-layer.is-disabled {
+  opacity: 0;
+  pointer-events: none !important;
+}
+
+.nf-hotspot {
+  position: absolute;
+  appearance: none;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.nf-hotspot::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.38);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.34);
+  animation: nf-hotspot-dot-pulse 1800ms ease-in-out infinite;
+}
+
+.nf-hotspot:hover,
+.nf-hotspot:focus-visible {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  outline: none;
+}
+
+.nf-hotspot:disabled {
+  pointer-events: none;
+}
+
+.nf-hotspot-label {
+  --nf-label-shift: 0px;
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  max-width: 240px;
+  padding: 5px 10px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px #000;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(calc(-50% + var(--nf-label-shift)), -8px);
+  transition: opacity 150ms ease;
+}
+
+.nf-hotspot-label.is-below {
+  top: 100%;
+  bottom: auto;
+  transform: translate(calc(-50% + var(--nf-label-shift)), 8px);
+}
+
+.nf-hotspot:hover .nf-hotspot-label,
+.nf-hotspot:focus-visible .nf-hotspot-label {
+  opacity: 1;
+}
+
+@keyframes nf-hotspot-dot-pulse {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.45); }
+}

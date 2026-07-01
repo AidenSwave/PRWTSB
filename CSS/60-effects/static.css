@@ -1,0 +1,98 @@
+.dialogue-static {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+}
+
+.dialogue-static::after {
+  content: "";
+  position: absolute;
+  z-index: 4;
+  inset: -0.12em -0.16em;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 32%, rgba(238, 224, 199, 0.58) 0 0.45px, transparent 0.8px),
+    radial-gradient(circle at 73% 68%, rgba(205, 185, 151, 0.46) 0 0.55px, transparent 0.9px),
+    repeating-linear-gradient(0deg, rgba(220, 205, 178, 0.10) 0 1px, transparent 1px 3px);
+  background-size: 3px 4px, 5px 3px, 100% 4px;
+  opacity: 0.28;
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 36%, rgba(0, 0, 0, 0.78) 68%, transparent 100%);
+  mask-image: radial-gradient(ellipse at center, #000 36%, rgba(0, 0, 0, 0.78) 68%, transparent 100%);
+  animation: dialogue-static-tv-noise 116ms steps(2, end) infinite;
+}
+
+.dialogue-static::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: -0.08em -0.2em;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent 0 2px,
+    rgba(4, 5, 5, 0.82) 2px 3px, transparent 3px 6px,
+    rgba(232, 214, 181, 0.12) 6px 7px);
+  mix-blend-mode: hard-light;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  animation: dialogue-static-signal-slices 173ms steps(3, end) infinite;
+}
+
+.dialogue-static-character {
+  color: inherit;
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+.dialogue-static-character.is-static-altered {
+  position: relative;
+  display: inline-block;
+  color: #e4ce99;
+  opacity: var(--static-opacity, 0.62);
+  transform: translate(var(--static-x, 0), var(--static-y, 0))
+    skewX(var(--static-skew, 0));
+  filter: blur(var(--static-blur, 0.7px));
+  text-shadow: -1px 0 rgba(116, 88, 51, 0.72),
+    1px 0 rgba(255, 222, 166, 0.42), 0 0 2px rgba(238, 202, 143, 0.58),
+    0 0 5px rgba(128, 96, 53, 0.46);
+  will-change: transform, filter, opacity;
+}
+
+.dialogue-static-character.is-static-altered::before,
+.dialogue-static-character.is-static-altered::after {
+  content: attr(data-static-ghost);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.dialogue-static-character.is-static-altered::before {
+  z-index: -1;
+  color: rgba(255, 224, 176, 0.48);
+  transform: translate(var(--static-ghost-x, 1px), var(--static-ghost-y, 0));
+  filter: blur(0.8px);
+  clip-path: inset(0 0 48% 0);
+}
+
+.dialogue-static-character.is-static-altered::after {
+  z-index: 1;
+  color: rgba(72, 59, 40, 0.64);
+  transform: translate(var(--static-ghost-back-x, -1px), var(--static-ghost-back-y, 0));
+  filter: blur(1.15px);
+  mix-blend-mode: multiply;
+  clip-path: inset(52% 0 0 0);
+}
+
+@keyframes dialogue-static-tv-noise {
+  0% { background-position: 0 0, 1px 0, 0 0; opacity: 0.18; transform: translate(0, -0.4px); }
+  34% { background-position: 2px -1px, -1px 1px, 0 1px; opacity: 0.34; transform: translate(-0.5px, 0.2px); }
+  67% { background-position: -1px 2px, 2px -1px, 0 -1px; opacity: 0.23; transform: translate(0.4px, 0.6px); }
+  100% { background-position: 1px -2px, 0 2px, 0 0; opacity: 0.3; transform: translate(-0.2px, -0.3px); }
+}
+
+@keyframes dialogue-static-signal-slices {
+  0% { transform: translateX(-2px) scaleX(1.03); opacity: 0.55; }
+  38% { transform: translateX(3px) scaleX(0.98); opacity: 0.82; }
+  71% { transform: translateX(-4px) scaleX(1.06); opacity: 0.64; }
+  100% { transform: translateX(1px) scaleX(1.01); opacity: 0.74; }
+}
