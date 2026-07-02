@@ -9,6 +9,7 @@ export type DesktopBridge = {
   open(): Promise<{path:string;name:string;html:string}|null>;
   save(payload:{path?:string;html:string;saveAs?:boolean}):Promise<{path:string;name:string}|null>;
   preview(html:string):Promise<{url:string}>;
+  setTitle(title:string):void;
   onPreviewError(callback:(message:string)=>void):()=>void;
 };
 declare global { interface Window { desktop?: DesktopBridge } }

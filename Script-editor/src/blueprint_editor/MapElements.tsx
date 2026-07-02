@@ -5,6 +5,7 @@ import type { EdgeRoute, Point, SocketMeta, StoryGroup } from "../core/types";
 export type PassageNodeData = { label:string; start:boolean; sockets:SocketMeta[]; hasTerminalContinue:boolean; collapsed:boolean; onToggle():void };
 export type GroupNodeData = StoryGroup & { collapsed:boolean; onToggle():void; onColor(color:string):void };
 export type StageLaneData = { stage:string; color:string };
+export const StartNode=memo(()=> <div className="blueprint-start-node" title="Story starts here"><strong>START</strong><Handle id="start-out" type="source" position={Position.Right}/></div>);
 
 const ChipIcon=({start=false}:{start?:boolean})=><svg className="chip-icon" viewBox="0 0 24 24" aria-hidden="true"><path d={start?"M12 3 14.7 8.5 21 9.4l-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.4l6.3-.9Z":"M7 3v4M12 3v4M17 3v4M7 17v4M12 17v4M17 17v4M3 7h4M3 12h4M3 17h4M17 7h4M17 12h4M17 17h4M8 8h8v8H8z"}/></svg>;
 
@@ -17,7 +18,7 @@ export const SocketPin=({id,type,label,color,connected=false}:{id:string;type:"s
 export const ChipNode = memo(({data,selected}:NodeProps)=>{const d=data as unknown as PassageNodeData;return <article className={`blueprint-chip blueprint-chip-simple ${selected?"selected":""} ${d.start?"is-start":""}`} title={d.label}>
   <strong className="simple-chip-name">{d.label}</strong>
   <Handle id="in-left" type="target" position={Position.Left} className="simple-input"/>
-  <div className="simple-outputs" title="Outputs">{(()=>{const outputs=[...d.sockets.map((s,i)=>({id:`socket-${i}`,key:s.id})),...(!d.hasTerminalContinue?[{id:"default-socket",key:"default"}]:[])];return outputs.map((output,index)=><Handle key={output.key} id={output.id} type="source" position={Position.Right} className="simple-output" style={{top:`${((index+.5)/outputs.length)*100}%`}}/>)})()}</div>
+  <div className="simple-outputs" title="Outputs">{(()=>{const outputs=[...d.sockets.map((s,i)=>({id:`socket-${i}`,key:s.id,label:s.target?s.label:"Unset link",color:s.target?s.color:"#9aa29d",terminal:false})),...(!d.hasTerminalContinue?[{id:"default-socket",key:"default",label:"End",color:"#8d9690",terminal:true}]:[])];return outputs.map((output,index)=><span key={output.key} className={`simple-output-wrap${output.terminal?" terminal":""}`} style={{top:`${((index+.5)/outputs.length)*100}%`,"--socket-color":output.color} as React.CSSProperties}><Handle id={output.id} type="source" position={Position.Right} className="simple-output"/><span className="socket-speech">{output.label}</span></span>)})()}</div>
   <Handle id="in-top" type="target" position={Position.Top} className="legacy-handle"/><Handle id="in-right" type="target" position={Position.Right} className="legacy-handle"/><Handle id="in-bottom" type="target" position={Position.Bottom} className="legacy-handle"/>
   <Handle id="out-top" type="source" position={Position.Top} className="legacy-handle"/><Handle id="out-left" type="source" position={Position.Left} className="legacy-handle"/><Handle id="out-bottom" type="source" position={Position.Bottom} className="legacy-handle"/>
   </article>});

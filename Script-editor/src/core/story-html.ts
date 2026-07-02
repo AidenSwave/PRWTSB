@@ -66,7 +66,7 @@ export function socketDirectives(text: string): { id: string; label: string; tar
     else if (conditionContext) context = conditionContext[1];
     const socket = line.trim().match(/^\/Socket(?:\s+([^\-]+?))?(?:\s*->\s*\[\[([^\]]+)\]\])?\s*$/i);
     const legacy = line.trim().match(/^Continue\s*:\s*\[\[([^\]]*)\]\]\s*$/i);
-    if (socket) sockets.push({ id: `socket-${index++}`, label: socket[1]?.trim() || "Continue", target: socket[2]?.trim() });
+    if (socket) { const explicit=socket[1]?.trim(); sockets.push({ id: `socket-${index++}`, label: context && (!explicit || /^Continue$/i.test(explicit)) ? context : explicit || "Continue", target: socket[2]?.trim() }); }
     else if (legacy) sockets.push({ id: `socket-${index++}`, label: context || "Continue", target: legacy[1].trim() || undefined });
   }
   return sockets;

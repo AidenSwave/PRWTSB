@@ -103,6 +103,7 @@ export function PassageEditor({ passage, onChange, onClose, onOpenPassage }: {
   const [addSearch, setAddSearch] = useState("");
   const [selectedDirectives, setSelectedDirectives] = useState<Set<string>>(() => new Set());
   const [remoteAssets,setRemoteAssets]=useState<string[]>([]);
+  const [sourceMode,setSourceMode]=useState(false);
   const refreshAssets=async()=>{try{const response=await fetch("https://api.github.com/repos/AidenSwave/PRWTSB/git/trees/main?recursive=1",{cache:"no-store"});if(!response.ok)return;const data=await response.json() as {tree?:{path:string;type:string}[]};setRemoteAssets((data.tree||[]).filter(item=>item.type==="blob"&&/^assets\//i.test(item.path)).map(item=>item.path))}catch{/* leave current choices visible while offline */}};
 
   useEffect(() => {
@@ -113,7 +114,7 @@ export function PassageEditor({ passage, onChange, onClose, onOpenPassage }: {
 
   useEffect(() => {
     const removeSelected = (event: KeyboardEvent) => {
-      if (!selectedDirectives.size || !["Backspace", "Delete"].includes(event.key)) return;
+      if (!selectedDirectives.size || event.key !== "Backspace" || (!event.metaKey && !event.ctrlKey)) return;
       const target = event.target as HTMLElement;
       const selectedControl=target.closest?.(".selected-directive");
       if ((/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName) || target.isContentEditable) && !selectedControl) return;
@@ -138,6 +139,7 @@ export function PassageEditor({ passage, onChange, onClose, onOpenPassage }: {
 
   useEffect(() => {
     const openAdd = (event: KeyboardEvent) => {
+      if(event.shiftKey&&event.key==="Tab"){event.preventDefault();setSourceMode(value=>!value);return}
       if (!event.shiftKey || event.key.toLowerCase() !== "a") return;
       event.preventDefault();
       setAddSearch("");
@@ -263,17 +265,17 @@ export function PassageEditor({ passage, onChange, onClose, onOpenPassage }: {
     requestAnimationFrame(()=>editor.current?.focus());
   };
 
-  const addOptionFeature = (kind: "variable" | "passage") => {
+  const addOptionFeature = (kind: "variable" | "passage" | "socket") => {
     if (!optionMenu) return;
     const lines = text.split("\n");
-    const content = kind === "variable" ? "\t[Variable + 10]" : "\tContinue: [[New Passage]]";
+    const content = kind === "variable" ? "\t[Variable + 10]" : kind === "socket" ? "\t/Socket Continue" : "\tContinue: [[New Passage]]";
     if (optionMenu.hasBody) lines.splice(optionMenu.bodyEnd, 0, content);
     else {
       lines[optionMenu.start] = `${lines[optionMenu.start].trimEnd()}{`;
       lines.splice(optionMenu.start + 1, 0, content, "}");
     }
     publish(lines.join("\n"));
-    if (kind === "passage") setExpandedChoices(current => new Set(current).add(optionMenu.start));
+    if (kind !== "variable") setExpandedChoices(current => new Set(current).add(optionMenu.start));
     setOptionMenu(undefined);
   };
 
@@ -375,8 +377,8 @@ export function PassageEditor({ passage, onChange, onClose, onOpenPassage }: {
       const match=mediaAt(lineIndex)! as RegExpMatchArray;
       const kind=match[1].toLowerCase(),selected=selectedDirectives.has(`${lineIndex}:${lineIndex+1}`);
       const update=(name:string,modifiers:string)=>{const source=text.split("\n");source[lineIndex]=`@${kind} ${name||"Asset"}${modifiers.trim()?` ${modifiers.trim()}`:""}`;publish(source.join("\n"))};
-      const assets=[...new Set(remoteAssets.filter(path=>kind!=="audio"||/\.(?:mp3|wav|ogg|m4a|flac)$/i.test(path)).map(path=>path.split("/").pop()!.replace(/\.[^.]+$/,"")))].sort(),listId=`${kind}-assets-${lineIndex}`;
-      return <label className={`media-control media-${kind}${selected?" selected-directive":""}`} key={`media-${lineIndex}`} tabIndex={0} draggable onClick={event=>selectDirective(lineIndex,lineIndex+1,event.shiftKey)} onDragStart={event=>{selectDirective(lineIndex,lineIndex+1,event.shiftKey);event.dataTransfer.setData("text/plain",lines[lineIndex].trim());event.dataTransfer.setData("application/x-script-editor-lines",JSON.stringify({start:lineIndex,end:lineIndex+1}))}}><span>{kind==="audio"?"♪":kind==="sequence"?"⏭":"▶"}</span><b>{kind}</b><input aria-label={`${kind} asset`} list={listId} value={match[2]} onMouseDown={()=>void refreshAssets()} onChange={event=>update(event.target.value,match[3])}/><datalist id={listId}>{assets.map(asset=><option key={asset} value={asset}/>)}</datalist><input className="media-modifiers" aria-label={`${kind} options`} placeholder="options" value={match[3].trim()} onChange={event=>update(match[2],event.target.value)}/></label>;
+      const assets=[...new Set(remoteAssets.filter(path=>path.split("/").includes(activeStage)).filter(path=>kind!=="audio"||/\.(?:mp3|wav|ogg|m4a|flac)$/i.test(path)).map(path=>path.split("/").pop()!.replace(/\.[^.]+$/,"")))].sort(),listId=`${kind}-assets-${lineIndex}`;
+      return <label className={`media-control media-${kind}${selected?" selected-directive":""}`} key={`media-${lineIndex}`} tabIndex={0} draggable onClick={event=>selectDirective(lineIndex,lineIndex+1,event.shiftKey)} onDragStart={event=>{selectDirective(lineIndex,lineIndex+1,event.shiftKey);event.dataTransfer.setData("text/plain",lines[lineIndex].trim());event.dataTransfer.setData("application/x-script-editor-lines",JSON.stringify({start:lineIndex,end:lineIndex+1}))}}><span>{kind==="audio"?"♪":kind==="sequence"?"⏭":"▶"}</span><b>{kind}</b><input aria-label={`${kind} asset`} list={listId} value={match[2].toLowerCase()==="asset"?"":match[2]} placeholder="Choose asset…" onMouseDown={()=>void refreshAssets()} onChange={event=>update(event.target.value||"Asset",match[3])}/><datalist id={listId}>{assets.map(asset=><option key={asset} value={asset}/>)}</datalist>{kind!=="audio"&&<input className="media-modifiers" aria-label={`${kind} options`} placeholder="options" value={match[3].trim()} onChange={event=>update(match[2],event.target.value)}/>}</label>;
     };
     const shotControl = (lineIndex: number) => {
       const match = lines[lineIndex].match(/^\s*\[Shot\s*:\s*(Wide|Closeup)\s*\]\s*$/i)!;
@@ -388,7 +390,7 @@ export function PassageEditor({ passage, onChange, onClose, onOpenPassage }: {
       if(/^\s*Continue\s*:/i.test(lines[lineIndex])){const lastMeaningful=lines.reduce((last,line,index)=>line.trim()?index:last,-1),terminal=lineIndex===lastMeaningful;return <button type="button" className={`continue-passage-button ${terminal?"terminal":"nested"}${socket.target?"":" unbound"}`} key={`continue-${lineIndex}`} disabled={!socket.target} onClick={()=>socket.target&&onOpenPassage(socket.target)} title={socket.target?`Open ${socket.target}`:"Connect this socket in Blueprint"}>{socket.target||"Unbound"}</button>}
       const socketIndex = lines.slice(0, lineIndex).filter((_, index) => socketAt(index)).length;
       const colors = ["#66bfae", "#7399e6", "#a579d1", "#e28b70", "#d1aa45", "#68ad79"];
-      return <span className="script-socket" key={`socket-${lineIndex}`} style={{ "--socket-color": colors[socketIndex % colors.length] } as React.CSSProperties} title={`${socket.label}${socket.target ? ` → ${socket.target}` : " (not linked)"}`}>🔌</span>;
+      return <span className={`script-socket${socket.target?"":" unbound"}`} key={`socket-${lineIndex}`} style={{ "--socket-color": colors[socketIndex % colors.length] } as React.CSSProperties} title={`${socket.label}${socket.target ? ` → ${socket.target}` : " (not linked)"}`}>{socket.target?socket.label:"Unset link"}</span>;
     };
     result.push(<div className="passage-environment" key="environment"><label><span>Stage</span><select value={activeStage} onMouseDown={()=>void refreshAssets()} onChange={event => updateStage(event.target.value)}>{availableStages.map(name => <option key={name}>{name}</option>)}</select></label>{sceneControl(firstSceneLine)}</div>);
     const choiceAt = (start: number) => {
@@ -446,9 +448,10 @@ export function PassageEditor({ passage, onChange, onClose, onOpenPassage }: {
       const { start, bodyEnd, label, variable, meaningful, hasBody } = choice;
       const scene = hasBody && !variable;
       const expanded = expandedChoices.has(start);
-      return <span className={`choice-entry${scene ? " scene-entry" : ""}`} key={start} onContextMenu={event => { event.preventDefault(); event.stopPropagation(); setOptionMenu({ start, end: choice.end, bodyEnd, hasBody, x: event.clientX, y: event.clientY }); }}>
+      return <span className={`choice-entry${scene ? " scene-entry" : ""}`} key={start} onContextMenu={event => { if ((event.target as HTMLElement).matches("input,textarea,[contenteditable=true]")) return; event.preventDefault(); event.stopPropagation(); setOptionMenu({ start, end: choice.end, bodyEnd, hasBody, x: event.clientX, y: event.clientY }); }}>
         <span className="screenplay-choice-line"><span className="choice-shell">
           <input className={`screenplay-choice${scene ? " has-scene" : ""}`} aria-label="Option name" value={label} size={Math.max(4, label.length)} onPointerDown={event => event.stopPropagation()} onChange={event => updateChoiceLabel(start, event.target.value)}/>
+          <button type="button" className="choice-tool option-menu-trigger" title="Option actions" aria-label="Option actions" onPointerDown={event=>event.stopPropagation()} onClick={event=>{event.stopPropagation();const box=event.currentTarget.getBoundingClientRect();setOptionMenu({start,end:choice.end,bodyEnd,hasBody,x:box.left,y:box.bottom+3})}}>•••</button>
           {variable && <button type="button" className="choice-tool variable-tool" title="Edit variable adjustment" aria-label={`Edit ${variable[1]} adjustment`} onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); setVariableMenu(variableMenu === start ? undefined : start); }}>±</button>}
           {scene && <button type="button" className="choice-tool scene-toggle" title={expanded ? "Fold option scene" : "Show option scene"} aria-expanded={expanded} onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); setExpandedChoices(current => { const next = new Set(current); next.has(start) ? next.delete(start) : next.add(start); return next; }); }}>{expanded ? "⌃" : "⌄"}</button>}
           {variable && variableMenu === start && <span className="variable-popover" onPointerDown={event => event.stopPropagation()}>
@@ -464,7 +467,7 @@ export function PassageEditor({ passage, onChange, onClose, onOpenPassage }: {
       const { start, end, speaker, condition, dialogueStart, dialogue } = block;
       const summary = condition ? `${condition[1]} ${condition[2]} ${condition[3].trim()}` : "";
       const direction = condition && /^[<>]/.test(condition[2]) ? (condition[2].startsWith(">") ? "positive" : "negative") : "neutral";
-      return <section className={`conditional-dialogue${condition ? ` has-condition condition-${direction}` : ""}`} key={`${keyPrefix}-${start}`} onContextMenu={event => { event.preventDefault(); event.stopPropagation(); setDialogueMenu({ start, end, x: event.clientX, y: event.clientY }); }}>
+      return <section className={`conditional-dialogue${condition ? ` has-condition condition-${direction}` : ""}`} key={`${keyPrefix}-${start}`} onContextMenu={event => { if ((event.target as HTMLElement).matches("input,textarea,[contenteditable=true]")) return; event.preventDefault(); event.stopPropagation(); setDialogueMenu({ start, end, x: event.clientX, y: event.clientY }); }}>
         <div className="condition-controls">
           {condition && <span className="condition-summary">{summary}</span>}
           <button type="button" className="condition-tool" title={condition ? "Edit dialogue condition" : "Add dialogue condition"} aria-label={condition ? `Edit condition ${summary}` : "Add dialogue condition"} onClick={() => condition ? setConditionMenu(conditionMenu === start ? undefined : start) : addCondition(start)}>◇</button>
@@ -643,10 +646,11 @@ export function PassageEditor({ passage, onChange, onClose, onOpenPassage }: {
       result.push(<span className="choice-bundle" key={`choices-${i}`}>{choices.map(renderChoice)}</span>);
       i = end;
     }
-    if(!/^\s*Continue\s*:\s*\[\[[^\]]+\]\]\s*$/i.test(lines.filter(line=>line.trim()).at(-1)||""))result.push(<span className="script-socket default" key="default-socket" title="Default passage output">🔌</span>);
+    if(!/^\s*Continue\s*:\s*\[\[[^\]]+\]\]\s*$/i.test(lines.filter(line=>line.trim()).at(-1)||""))result.push(<span className="script-socket default unbound" key="default-socket" title="Unset passage link">Unset link</span>);
     return result;
   };
 
+  if(sourceMode)return <><div className="typing-hotkeys"><span>Shift+Tab</span> Return to screenplay</div><div className="passage-segmented-editor source-mode"><textarea autoFocus spellCheck aria-label="Passage source" value={text} onChange={event=>publish(event.target.value)} onKeyDown={event=>{if(event.shiftKey&&event.key==="Tab"){event.preventDefault();event.stopPropagation();setSourceMode(false)}}}/></div></>;
   return <>
     <div className="typing-hotkeys"><span>Ctrl+D</span> Dialogue <span>Ctrl+O</span> Option</div>
     <div ref={formatted} className="passage-segmented-editor">
@@ -655,6 +659,7 @@ export function PassageEditor({ passage, onChange, onClose, onOpenPassage }: {
     {optionMenu && <div className="option-context-menu editor-context-menu" style={{ left: optionMenu.x, top: optionMenu.y }}>
       <button type="button" onClick={() => addOptionFeature("variable")}>± Add buff/debuff</button>
       <button type="button" onClick={() => addOptionFeature("passage")}>↳ Add passage below</button>
+      <button type="button" onClick={() => addOptionFeature("socket")}>◁ Make socket</button>
       <button type="button" className="context-delete" onClick={() => deleteLines(optionMenu.start, optionMenu.end)}>× Delete option</button>
     </div>}
     {dialogueMenu && <div className="option-context-menu editor-context-menu" style={{ left: dialogueMenu.x, top: dialogueMenu.y }}>

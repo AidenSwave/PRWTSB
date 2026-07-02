@@ -54,6 +54,7 @@ ipcMain.handle("file:preview", async (_event, html: string) => {
   return { url };
 });
 
+ipcMain.on("window:title", (_event, title: string) => window?.setTitle(title));
 app.whenReady().then(createWindow);
 app.on("window-all-closed", () => { previewServer?.close(); if (process.platform !== "darwin") app.quit(); });
 app.on("activate", () => { if (!BrowserWindow.getAllWindows().length) createWindow(); });

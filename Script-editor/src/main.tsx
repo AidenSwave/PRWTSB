@@ -18,5 +18,5 @@ class StartupBoundary extends Component<{children:ReactNode},{error?:Error}> {
 const root=document.getElementById("root");
 if(!root)throw new Error("Script Editor root element is missing.");
 const bridge=window.desktop;
-const bridgeReady=bridge&&[bridge.open,bridge.save,bridge.preview,bridge.onPreviewError].every(method=>typeof method==="function");
+const bridgeReady=(bridge&&[bridge.open,bridge.save,bridge.preview,bridge.onPreviewError].every(method=>typeof method==="function"))||/^https?:$/.test(location.protocol);
 createRoot(root).render(<React.StrictMode>{bridgeReady?<StartupBoundary><App/></StartupBoundary>:<StartupFailure detail="The Electron desktop bridge did not load. The generated preload files may be missing or out of date."/>}</React.StrictMode>);
