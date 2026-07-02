@@ -3,10 +3,20 @@
 
   var modules = setup.newFormatModules = setup.newFormatModules || {};
 
-  modules.renderStaticMarkup = setup.projectWho.static.renderMarkup;
-  modules.escapeHtml = setup.projectWho.static.escapeHtml;
-  modules.initStaticFlicker = setup.projectWho.static.init;
-  modules.observeStaticFlicker = setup.projectWho.static.observe;
+  // Resolve the static module lazily.  Remote runtime discovery loads files in
+  // alphabetical order, so startup.js may execute before static-effect.js.
+  modules.renderStaticMarkup = function () {
+    return setup.projectWho.static.renderMarkup.apply(setup.projectWho.static, arguments);
+  };
+  modules.escapeHtml = function () {
+    return setup.projectWho.static.escapeHtml.apply(setup.projectWho.static, arguments);
+  };
+  modules.initStaticFlicker = function () {
+    return setup.projectWho.static.init.apply(setup.projectWho.static, arguments);
+  };
+  modules.observeStaticFlicker = function () {
+    return setup.projectWho.static.observe.apply(setup.projectWho.static, arguments);
+  };
 
 Config.macros.typeVisitedPassages = true;
     Config.macros.typeSkipKey = "Control";
